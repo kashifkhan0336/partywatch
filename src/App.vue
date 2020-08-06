@@ -1,7 +1,7 @@
 <template>
     <v-app>
         <vue-confirm-dialog></vue-confirm-dialog>
-        <button v-if="!host" @click="hostTime">Get Host Time</button>
+        <button v-if="!host" @click="hostTime">Sync with host</button>
         <span>{{ $socket.connected ? 'Connected' : 'Disconnected' }}</span>
         <p>Status : {{host}}</p>
         <input type="file" id="vdFile" name="" @change="loadVideo">
@@ -39,13 +39,13 @@ export default {
         },
         request_time(){
             if(this.host){
-                alert("Client Asked for time")
+                //alert("Client Asked for time")
                 this.$socket.client.emit("host_response_time",this.$refs.videoPlayer.currentTime)
             }
         },
         response_time(time){
             if(!this.host){
-                alert(time.host_time/60)
+                this.$refs.videoPlayer.currentTime = parseFloat(time.host_time)
             }
         }
     },
