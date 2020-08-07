@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/precache-manifest.2c1238a7344069c2b762320d5af2d522.js"
+  "/precache-manifest.5378ea695f86ac5e394d869fb6c7e3c3.js"
 );
 
 workbox.core.setCacheNameDetails({prefix: "partywatch"});
