@@ -7,7 +7,10 @@ import VueSocketIOExt from 'vue-socket.io-extended';
 import io from 'socket.io-client/dist/socket.io.slim.js';
 import VueConfirmDialog from 'vue-confirm-dialog'
 Vue.config.productionTip = false
+import Buefy from 'buefy'
+import 'buefy/dist/buefy.css'
 
+Vue.use(Buefy)
 
 Vue.use(VueConfirmDialog)
 Vue.component('vue-confirm-dialog', VueConfirmDialog.default)

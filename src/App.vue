@@ -1,24 +1,67 @@
 <template>
-    <v-app>
-        <v-app-bar app clipped-left>
-            <v-toolbar-title>PartyWatch</v-toolbar-title>
-        </v-app-bar>
-        <v-main>
+    <div id="app">
+        <b-navbar>
+            <template slot="brand">
+                <b-navbar-item tag="router-link" :to="{ path: '/' }">
+                    <b-icon icon="view-dashboard" size="is-large" type="is-primary">
+                    </b-icon>
+                </b-navbar-item>
+            </template>
+            <template slot="start">
+            </template>
+            <template slot="end">
+                <b-navbar-item tag="div">
+                    <div class="buttons">
+                        <a class="button is-primary">
+                            <strong>Watch History</strong>
+                        </a>
+                    </div>
+                </b-navbar-item>
+                <b-navbar-item tag="div">
+                    <div class="buttons">
+                        <b-field class="file">
+                            <b-upload v-model="file" @change="loadVideo">
+                                <a class="button is-primary">
+                                    <b-icon icon="upload"></b-icon>
+                                    <strong>Load Video</strong>
+                                </a>
+                            </b-upload>
+                            <span class="file-name" v-if="file">
+                                {{ file.name }}
+                            </span>
+                        </b-field>
+                    </div>
+                </b-navbar-item>
+                <b-navbar-item tag="div">
+                    <div class="buttons">
+                        <b-button v-if="!host" @click="hostTime" type="is-primary" icon-right="cached" />
+                    </div>
+                </b-navbar-item>
+            </template>
+        </b-navbar>
+        <b-loading :is-full-page="isFullPage" :active.sync="isLoading" :can-cancel="false"></b-loading>
+        <vue-confirm-dialog></vue-confirm-dialog>
+
+        <b-notification auto-close duration="3000" :active.sync="$socket.connected"  type="is-success" has-icon aria-close-label="Close notification" position="is-bottom-right">
+            You're Connected
+        </b-notification>
+        <div class="video-js-responsive-container vjs-hd">
+            <video @play="playEvent" @pause="pauseEvent" ref="videoPlayer" id="my-video" class="video-js" controls preload="auto" width="640" height="264" poster="" data-setup="{}">
+            </video>
+        </div>
+    </div>
+    <!-- 
             <vue-confirm-dialog></vue-confirm-dialog>
             <div id="sync-button">
                 <v-btn v-if="!host" @click="hostTime" id="">Sync with host</v-btn>
             </div>
+            <h3>Screen Size : {{ this.$vuetify.breakpoint.name }}</h3>
             <h3>{{ $socket.connected ? 'Connected' : 'Disconnected' }}</h3>
             <v-spacer></v-spacer>
             <p>Host : {{host}}</p>
-            <input type="file" id="vdFile" name="" @change="loadVideo">
-            <!-- <v-file-input dark @change="loadVideo" id="vdFile"></v-file-input> -->
-            <div class="video-js-responsive-container vjs-hd">
-                <video @play="playEvent" @pause="pauseEvent" ref="videoPlayer" id="my-video" class="video-js" controls preload="auto" width="640" height="264" poster="" data-setup="{}">
-                </video>
-            </div>
+
         </v-main>
-    </v-app>
+    </v-app> -->
 </template>
 <script>
 import videojs from 'video.js/dist/alt/video.core.js';
@@ -35,18 +78,36 @@ export default {
             player: null,
             host: false,
             drawer: null,
+            isLoading: false,
+            isFullPage: true,
+            file: null,
 
         }
     },
     created() {
-        this.$vuetify.theme.dark = true
+        this.$vuetify.theme.dark = false
+        this.openLoading();
+    },
+    watch: {
+        file: function(event) {
+            //var videoFile = event.target.files[0]
+            var url = URL.createObjectURL(event);
+            console.log(url)
+            this.player.src({
+                type: "video/mp4",
+                src: url,
+            });
+        },
+        status: function() {
+            alert("Changed")
+        }
     },
     sockets: {
         reply(msg) {
             console.log(msg)
         },
         play_response(time) {
-            if (this.$refs.videoPlayer.readyState === 4) {
+            if (this.$refs.videoPlayer.readyState === 4 && this.host == false) {
                 this.$refs.videoPlayer.currentTime = parseFloat(time.currentTime)
                 console.log(`Play response from server ${time.currentTime}`)
                 this.$refs.videoPlayer.play()
@@ -54,7 +115,7 @@ export default {
 
         },
         pause_response(time) {
-            if (this.$refs.videoPlayer.readyState === 4) {
+            if (this.$refs.videoPlayer.readyState === 4 && this.host == false) {
                 this.$refs.videoPlayer.currentTime = parseFloat(time.currentTime)
                 console.log(`Pause response from server ${time.currentTime}`)
                 this.$refs.videoPlayer.pause()
@@ -73,7 +134,16 @@ export default {
             }
         }
     },
+    computed() {
+
+    },
     methods: {
+        openLoading() {
+            this.isLoading = true
+            setTimeout(() => {
+                this.isLoading = false
+            }, 4000)
+        },
         loadVideo(event) {
             var videoFile = event.target.files[0]
             var url = URL.createObjectURL(videoFile);
@@ -84,7 +154,7 @@ export default {
             });
         },
         playEvent() {
-            if (this.host) {
+            if (this.host && this.$refs.videoPlayer.readyState === 4) {
                 console.log("Played!");
                 this.$socket.client.emit('play_request', this.$refs.videoPlayer.currentTime)
                 console.log(this.$refs.videoPlayer.currentTime)
@@ -92,7 +162,7 @@ export default {
 
         },
         pauseEvent() {
-            if (this.host) {
+            if (this.host && this.$refs.videoPlayer.readyState === 4) {
                 console.log("Paused!");
                 this.$socket.client.emit('pause_request', this.$refs.videoPlayer.currentTime)
                 console.log(this.$refs.videoPlayer.currentTime)
@@ -117,7 +187,20 @@ export default {
                 },
                 callback: (confirm, password) => {
                     if (confirm && password == "master") {
-                        this.host = true
+                        this.host = true;
+                        this.$buefy.notification.open({
+                            message: "You're hosting!",
+                            type: 'is-success',
+                            hasIcon: true,
+                            position: 'is-bottom-right',
+                        })
+                    } else {
+                        this.$buefy.notification.open({
+                            message: "You're not hosting!",
+                            type: 'is-danger',
+                            hasIcon: true,
+                            position: 'is-bottom-right',
+                        })
                     }
                 }
             })
@@ -131,6 +214,7 @@ export default {
         this.player = videojs(this.$refs.videoPlayer, function onPlayerReady() {
             console.log('onPlayerReady', this);
         })
+
         this.Host();
         //window.test = this.player
 
