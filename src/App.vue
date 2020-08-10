@@ -1,6 +1,8 @@
 <template>
     <div id="app">
-        <b-navbar>
+        <b-loading :is-full-page="isFullPage" animation="zoom-out" :active.sync="isLoading" :can-cancel="false">
+        </b-loading>
+        <b-navbar fixed-top>
             <template slot="brand">
                 <b-navbar-item tag="router-link" :to="{ path: '/' }">
                     <b-icon icon="view-dashboard" size="is-large" type="is-primary">
@@ -39,29 +41,15 @@
                 </b-navbar-item>
             </template>
         </b-navbar>
-        <b-loading :is-full-page="isFullPage" :active.sync="isLoading" :can-cancel="false"></b-loading>
-        <vue-confirm-dialog></vue-confirm-dialog>
-
-        <b-notification auto-close duration="3000" :active.sync="$socket.connected"  type="is-success" has-icon aria-close-label="Close notification" position="is-bottom-right">
+        <vue-confirm-dialog v-show="isLoading === false"></vue-confirm-dialog>
+        <b-notification auto-close duration="3000" :active.sync="$socket.connected" type="is-success" has-icon aria-close-label="Close notification" position="is-bottom-right">
             You're Connected
         </b-notification>
         <div class="video-js-responsive-container vjs-hd">
-            <video @play="playEvent" @pause="pauseEvent" ref="videoPlayer" id="my-video" class="video-js" controls preload="auto" width="640" height="264" poster="" data-setup="{}">
+            <video @seeked="seekedEvent" @play="playEvent" @pause="pauseEvent" ref="videoPlayer" id="my-video" class="video-js" controls preload="auto" width="640" height="264" poster="" data-setup="{}">
             </video>
         </div>
     </div>
-    <!-- 
-            <vue-confirm-dialog></vue-confirm-dialog>
-            <div id="sync-button">
-                <v-btn v-if="!host" @click="hostTime" id="">Sync with host</v-btn>
-            </div>
-            <h3>Screen Size : {{ this.$vuetify.breakpoint.name }}</h3>
-            <h3>{{ $socket.connected ? 'Connected' : 'Disconnected' }}</h3>
-            <v-spacer></v-spacer>
-            <p>Host : {{host}}</p>
-
-        </v-main>
-    </v-app> -->
 </template>
 <script>
 import videojs from 'video.js/dist/alt/video.core.js';
@@ -85,7 +73,7 @@ export default {
         }
     },
     created() {
-        this.$vuetify.theme.dark = false
+        this.$vuetify.theme.dark = false;
         this.openLoading();
     },
     watch: {
@@ -132,6 +120,12 @@ export default {
                 this.$refs.videoPlayer.currentTime = parseFloat(time.host_time)
                 //this.$refs.videoPlayer.pause();
             }
+        },
+        seeked_response(time) {
+            if (!this.host) {
+                this.$refs.videoPlayer.currentTime = parseFloat(time.currentTime)
+                console.log(time)
+            }
         }
     },
     computed() {
@@ -143,6 +137,7 @@ export default {
             setTimeout(() => {
                 this.isLoading = false
             }, 4000)
+
         },
         loadVideo(event) {
             var videoFile = event.target.files[0]
@@ -168,6 +163,12 @@ export default {
                 console.log(this.$refs.videoPlayer.currentTime)
             }
 
+        },
+        seekedEvent() {
+            if (this.host) {
+                console.log("Seeked!");
+                this.$socket.client.emit('seeked_request', this.$refs.videoPlayer.currentTime)
+            }
         },
         timeUpdate(e) {
             console.log(e)

@@ -12,9 +12,11 @@ import 'buefy/dist/buefy.css'
 
 Vue.use(Buefy)
 
+
 Vue.use(VueConfirmDialog)
 Vue.component('vue-confirm-dialog', VueConfirmDialog.default)
 const socket = io("https://partywatch-socketio-server.herokuapp.com/")
+//const socket = io("http://192.168.2.103:8080")
 Vue.use(VueSocketIOExt, socket);
 require("video.js/dist/video-js.css")
 new Vue({
