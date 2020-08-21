@@ -15,7 +15,7 @@
             <template slot="end">
                 <b-navbar-item tag="div">
                     <div class="buttons">
-                        <a class="button is-primary">
+                        <a class="button is-primary" @click="testRoute()">
                             <strong>Watch History</strong>
                         </a>
                     </div>

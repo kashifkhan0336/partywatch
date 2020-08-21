@@ -21,6 +21,7 @@
     "video.js": "^7.8.4",
     "vue": "^2.6.11",
     "vue-confirm-dialog": "^1.0.2",
+    "vue-firestore": "^0.3.30",
     "vue-router": "^3.2.0",
     "vue-socket.io-extended": "^4.0.4"
   },
