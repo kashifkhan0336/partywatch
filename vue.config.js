@@ -13,7 +13,7 @@ module.exports = {
 	configureWebpack: {
 		plugins: [
 			new CompressionPlugin({
-				deleteOriginalAssets: true,
+				deleteOriginalAssets: false,
 				test: /\.js(\?.*)?$/i,
 			}),
 		],
